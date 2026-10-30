@@ -71,6 +71,7 @@ def discover_parts():
         html = http_get(BUY_PAGE, accept="text/html")
     except Exception as e:
         log(f"Part discovery failed ({e}); using fallback list.")
+        print(f"::warning::Part discovery failed: {e}")
         return {}
     parts = {}
     for m in re.finditer(r'"partNumber"\s*:\s*"(M[A-Z0-9]{4}LL/A)"', html):
@@ -169,7 +170,17 @@ def main():
 
     seen, backoff = load_state(), 0
     if "--once" in sys.argv:  # single check, for GitHub Actions / cron
-        hits = check(parts)
+        print(f"::notice::Watching {len(parts)} parts: {', '.join(sorted(parts))}")
+        try:
+            hits = check(parts)
+        except urllib.error.HTTPError as e:
+            body = e.read()[:300].decode("utf-8", "replace").replace("\n", " ")
+            print(f"::error::Apple returned HTTP {e.code}: {body}")
+            sys.exit(1)
+        except Exception as e:
+            print(f"::error::{type(e).__name__}: {e}")
+            sys.exit(1)
+        print(f"::notice::Check OK - {len(hits)} matching in-stock results")
         current = {f"{h[0]}|{h[2]}" for h in hits}
         new = [h for h in hits if f"{h[0]}|{h[2]}" not in seen]
         if new:
