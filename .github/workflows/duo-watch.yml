@@ -1,8 +1,9 @@
 name: iPhone Duo stock watch
 
 on:
-  schedule:
-    - cron: "*/5 * * * *"   # every 5 min (GitHub's minimum; runs can be delayed under load)
+  # schedule disabled: Apple blocks GitHub runner IPs (HTTP 541)
+  # schedule:
+  #   - cron: "*/5 * * * *"
   workflow_dispatch:        # "Run workflow" button for manual tests
 
 concurrency:
